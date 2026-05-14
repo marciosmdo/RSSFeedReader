@@ -1,50 +1,52 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# RSSFeedReader Constitution
 
-## Core Principles
+## Core Principles (actionable)
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Security — treat all external feeds as untrusted input
+- Threat modelling: document data flows and threat surface for any new integration in specs/research.md.
+- Input validation: validate feed URLs (scheme, host allowlist/denylist, length) before fetching.
+- Parsing safety: use a secure XML/HTML parser with entity expansion disabled; reject feeds that trigger XML bombs.
+- Network hygiene: enforce timeouts (e.g. connect 5s, read 10s), connection limits, and per-host rate limiting in ingestion code.
+- Secrets: never commit credentials; use environment variables or secret manager. Fail CI on detected secrets.
+- Dependency security: enable automated dependency updates (Dependabot or equivalent) and require a security scan (SCA) on merge.
+- Runtime hardening: run container/image scans (Trivy), and static security checks (Bandit for Python) in CI.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Maintainability — small, testable, well-documented modules
+- Modular design: keep feed ingestion, parsing, storage, and presentation as separate modules with clear interfaces.
+- Tests-first: every new feature must include unit tests for logic and an integration test for end-to-end feed ingestion (tests fail before implementation).
+- Test coverage: critical modules (ingestion/parsing/storage) must have coverage targets; track regressions in CI.
+- Readable code: require linters and formatters (e.g., ruff/black, mypy for type checking) as blocking CI checks.
+- Documentation: update specs/research.md, plan.md, and quickstart.md for every feature that changes architecture or deployment.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Code Quality & Review
+- PR standard: PRs must be small, linked to a spec in specs/[###-feature]/spec.md, include tests, and pass CI (lint, types, tests, security scan).
+- Code reviews: at least one approving review from a maintainer; security-sensitive changes require a second reviewer.
+- Static analysis: enforce type checking (mypy), complexity checks, and known-bad-pattern detection in CI.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Observability & Reliability
+- Logging: structured logs for ingestion and parsing errors; do not log raw feed content wholesale (redact PII).
+- Metrics: emit metrics for feed success/failure rates, parse times, queue/backlog length, and cache hit rates.
+- Alerts: define SLOs for ingestion (e.g., p95 parse latency) and set alert thresholds for sustained failures or backlogs.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Data Handling & Privacy
+- Minimal retention: persist only what is required; document retention policy in plan.md.
+- Sanitization: sanitize HTML before presenting to users; strip scripts and unsafe attributes.
+- Exports & backups: document backup strategy and ensure exports do not include secrets.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### VI. Release, Versioning & Rollout
+- Semantic versioning for releases; include migration notes for any breaking changes in specs/plan.md.
+- Rollout strategy: staged rollout for changes affecting ingestion (canary → gradual → full) with monitoring.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### VII. Governance & Amendments
+- Amendments: constitution changes require a PR referencing the relevant spec and approval by two maintainers.
+- Exceptions: any exception to a principle must be documented in the feature plan with justification and mitigation.
+- Enforcement: CI gate enforces linting, types, tests, and security scans; failures block merges.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Quick checklist (must be satisfied for feature acceptance)
+- [ ] Spec linked in specs/[###-feature]/spec.md ([spec template](.specify/templates/spec-template.md))
+- [ ] Threat model recorded in research.md
+- [ ] Unit + integration tests added and failing before implementation
+- [ ] Lint, types, and security scans pass in CI
+- [ ] Document retention and privacy decisions in plan.md
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
-
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
-
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Rationale:** These rules map to the project's goals (see [StakeholderDocuments/ProjectGoals.md](StakeholderDocuments/ProjectGoals.md)), feature constraints (see [StakeholderDocuments/AppFeatures.md](StakeholderDocuments/AppFeatures.md)), and chosen stack (see [StakeholderDocuments/TechStack.md](StakeholderDocuments/TechStack.md)). They prioritize secure ingestion of untrusted RSS/ATOM feeds, maintainable modular code, and CI-enforced quality gates.
